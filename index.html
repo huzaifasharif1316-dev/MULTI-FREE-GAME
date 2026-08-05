@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Hub</title>
+    <style>
+        body { margin: 0; background: #04040a; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; color: white; user-select: none; }
+        #game-container { position: relative; width: 800px; height: 400px; border: 4px solid #ff0055; box-shadow: 0 0 40px rgba(255, 0, 85, 0.3); border-radius: 8px; overflow: hidden; background: #000; }
+        canvas { background: #050510; display: block; }
+        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; box-sizing: border-box; }
+        .neon-borders { border-top: 12px solid #00ffff; border-bottom: 12px solid #ff00ff; border-left: 12px solid #00ffcc; border-right: 12px solid #ffea00; }
+        .hidden { display: none !important; }
+        .currency-bar { position: absolute; top: 20px; right: 40px; display: flex; gap: 15px; font-weight: bold; font-size: 16px; z-index: 15; }
+        .currency-item { background: rgba(255,255,255,0.07); padding: 4px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .hub-title { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 0 15px #ff0055; margin-bottom: 30px; letter-spacing: 3px; }
+        h1.game-title { font-size: 46px; font-family: 'Georgia', serif; text-shadow: 0 0 20px #ff0055; margin-bottom: 20px; }
+        .launcher-btn { background: rgba(255,255,255,0.03); border: 2px solid #fff; padding: 12px 30px; font-size: 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #fff; margin: 10px; transition: 0.2s ease; width: 280px; text-align: center; }
+        .btn-bd { border-color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+        .btn-bd:hover { background: #00ffcc; color: #000; box-shadow: 0 0 25px #00ffcc; }
+        .btn-rm { border-color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+        .btn-rm:hover { background: #ff0055; color: #fff; box-shadow: 0 0 25px #ff0055; }
+        .menu-btn { background: none; border: none; color: #ccc; font-size: 22px; margin: 8px 0; cursor: pointer; transition: 0.2s; }
+        .menu-btn:hover { color: #ff0055; transform: scale(1.05); }
+        .submenu-container { width: 90%; height: 85%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .grid-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-height: 200px; overflow-y: auto; }
+        .card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .action-btn { background: #ff0055; color: #fff; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .action-btn:hover { background: #fff; color: #000; }
+        .back-btn { margin-top: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 20px; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .back-btn:hover { background: #ff2255; }
+        .tutorial-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px dashed #ff0055; max-width: 600px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="currency-bar" id="global-wallet">
+            <div class="currency-item">🪙 <span id="coin-count">0</span></div>
+            <div class="currency-item">💎 <span id="diamond-count">0</span></div>
+        </div>
+
+        <div id="hub-launcher" class="screen-overlay neon-borders">
+            <div class="hub-title">SELECT GAME APP</div>
+            <button class="launcher-btn btn-bd" onclick="switchGameMode('block-dash-menu')">1. BLOCK DASH</button>
+            <button class="launcher-btn btn-rm" onclick="switchGameMode('racing-master-menu')">2. RACING MASTER</button>
+        </div>
+
+        <div id="block-dash-menu" class="screen-overlay hidden" style="border-left:15px solid #d23636; border-right:15px solid #d23636;">
+            <h1 class="game-title" style="text-shadow: 0 0 20px #00ffcc;">BLOCK DASH!</h1>
+            <button class="menu-btn" onclick="startBlockDash()">Play Game</button>
+            <button class="menu-btn" onclick="showSubScreen('shop-screen')">SHOP</button>
+            <button class="menu-btn" onclick="showSubScreen('inventory-screen')">Inventory</button>
+            <button class="back-btn" onclick="exitToLauncher()">QUIT TO HUB</button>
+        </div>
+
+        <div id="shop-screen" class="screen-overlay hidden">
+            <div class="submenu-container">
+                <h2 style="color:#ffd700">VIBRANT NEON SHOP</h2>
+                <div class="grid-layout">
+                    <div class="card"><div>1 Diamond Pack<br><span style="color:#00ffcc">100 🪙</span></div><button class="action-btn" onclick="buyDiamonds(1, 100)">Exchange</button></div>
+                    <div class="card"><div>20 Diamonds Pack<br><span style="color:#00ffcc">1000 🪙</span></div><button class="action-btn" onclick="buyDiamonds(20, 1000)">Exchange</button></div>
+                    <div class="card"><div>Pink Plasma Trail<br><span style="color:#ff00ff">5 💎</span></div><button class="action-btn" id="btn-trail1" onclick="buyTrail('pink', 5)">Buy</button></div>
+                    <div class="card"><div>Electric Cyan Trail<br><span style="color:#00ffff">12 💎</span></div><button class="action-btn" id="btn-trail2" onclick="buyTrail('cyan', 12)">Buy</button></div>
+                </div>
+                <button class="back-btn" onclick="switchGameMode('block-dash-menu')">BACK</button>
+            </div>
+        </div>
+
+        <div id="inventory-screen" class="screen-overlay hidden">
+            <div class="submenu-container">
+                <h2>YOUR INVENTORY</h2>
+                <div class="grid-layout" id="inventory-grid"></div>
+                <button class="back-btn" onclick="switchGameMode('block-dash-menu')">BACK</button>
+            </div>
+        </div>
+
+        <div id="racing-master-menu" class="screen-overlay hidden" style="border-left:15px solid #0055ff; border-right:15px solid #0055ff;">
+            <h1 class="game-title">RACING MASTER</h1>
+            <button class="menu-btn" style="color:#fff;" onclick="showSubScreen('racing-tutorial')">📖 Driving Manual</button>
+            <button class="menu-btn" style="color:#00ffcc;" onclick="startRacing('single')">▶ Single Player</button>
+            <button class="menu-btn" style="color:#00ffff;" onclick="startRacing('multi')">👥 Two Player controls</button>
+            <button class="menu-btn" style="color:#ffea00;" onclick="showSubScreen('racing-garage')">🔧 Tuning Garage</button>
+            <button class="menu-btn" style="color:#ff00ff;" onclick="showSubScreen('racing-showroom')">🛒 Showroom Shop</button>
+            <button class="back-btn" onclick="exitToLauncher()">QUIT TO HUB</button>
+        </div>
+
+        <div id="racing-tutorial" class="screen-overlay hidden">
+            <div class="submenu-container">
+                <h2 style="color:#ff0055">SANDBOX ACADEMY</h2>
+                <div class="tutorial-box">
+                    <strong>🕹️ Controls:</strong><br>
+                    • 🟥 <strong>P1 Red Car</strong>: Forward=W | Reverse=S | Left=A | Right=D<br>
+                    • 🟦 <strong>P2 Blue Car</strong>: Forward=Up | Reverse=Down | Left=Left | Right=Right<br><br>
+                    • Collect the flashing blue beacon checkpoints to increase your score.
+                </div>
+                <button class="back-btn" onclick="switchGameMode('racing-master-menu')">RETURN</button>
+            </div>
+        </div>
+
+        <div id="racing-garage" class="screen-overlay hidden">
+            <div class="submenu-container">
+                <h2 style="color:#ffea00">TUNING GARAGE</h2>
+                <div class="tutorial-box" style="border-color:#ffea00">
+                     Current Tuning Stats:<br>
+                    • Acceleration Stage: <span id="stat-accel-lvl">1</span>/5<br>
+                    • Top Speed Threshold: <span id="stat-speed-lvl">1</span>/5
+                </div>
+                <div class="grid-layout">
+                    <div class="card"><div>Upgrade Acceleration<br><span style="color:#ffd700" id="cost-accel">Cost: 150 🪙</span></div><button class="action-btn" style="background:#ffea00; color:#000" onclick="upgradeCarComponent('accel')">Tune</button></div>
+                    <div class="card"><div>Upgrade Top Speed<br><span style="color:#ffd700" id="cost-speed">Cost: 200 🪙</span></div><button class="action-btn" style="background:#ffea00; color:#000" onclick="upgradeCarComponent('speed')">Tune</button></div>
+                </div>
+                <button class="back-btn" onclick="switchGameMode('racing-master-menu')">RETURN</button>
+            </div>
+        </div>
+
+        <div id="racing-showroom" class="screen-overlay hidden">
+            <div class="submenu-container">
+                <h2 style="color:#ff00ff">VEHICLE SHOWROOM</h2>
+                <div class="grid-layout" id="car-shop-grid"></div>
+                <button class="back-btn" onclick="switchGameMode('racing-master-menu')">RETURN</button>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+    </div>
+
+    <!-- Scripts linked in correct sequence order -->
+    <script src="game.js"></script>
+    <script src="racing.js"></script>
+</body>
+</html>
+
