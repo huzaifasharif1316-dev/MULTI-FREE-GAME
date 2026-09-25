@@ -1,0 +1,52 @@
+name: Build Android APK (ARM-Ready)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository source code
+      uses: actions/checkout@v4
+
+    - name: Setup Java Development Kit (JDK)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Global Cordova Installation
+      run: sudo npm install -g cordova
+
+    - name: Generate Cordova Sandbox Environment
+      run: |
+        cordova create sandbox com.huzaifasharif.arcadehub "Racing Block Dash"
+        cd sandbox
+        cordova platform add android --no-telemetry
+
+    - name: Inject Source Code Layers
+      run: |
+        rm -rf sandbox/www/*
+        cp index.html sandbox/www/
+        cp game.js sandbox/www/
+        cp racing.js sandbox/www/
+
+    - name: Build Unsigned Mobile Package
+      run: |
+        cd sandbox
+        cordova build android --release --no-telemetry
+
+    - name: Export Mobile Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: racing-block-dash-apk
+        path: sandbox/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk
